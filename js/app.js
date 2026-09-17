@@ -104,7 +104,7 @@ if (ph < 0) stage.classList.remove('has-phase');
 else { if (subB) subB.textContent = PHASES[ph]; stage.classList.add('has-phase'); }
 }
 if (p >= 0.5 && !deep) { deep = 1; cap.classList.add('is-on'); dock.classList.add('is-on'); }
-else if (p < 0.45 && deep) { deep = 0; cap.classList.remove('is-on'); }
+else if (p < 0.45 && deep) { deep = 0; cap.classList.remove('is-on'); dock.classList.remove('is-on'); }
 if (idle >= 1500 && Math.abs(target - cur) < 0.4 && Math.abs(ht - hit) < 0.01) return 0;
 return 1;
 }
