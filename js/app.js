@@ -38,7 +38,7 @@ clearTimeout(mt);
 mt = setTimeout(function () { for (var i = 0; i < meas.length; i++) meas[i](); req(); }, 150);
 }
 addEventListener('resize', remeasure, { passive: true });
-addEventListener('scroll', req, { passive: true });
+addEventListener('scroll', function () { idle = 0; req(); }, { passive: true });
 D.addEventListener('visibilitychange', function () { if (!D.hidden) { last = 0; req(); } });
 function io(el, cb, opt) {
 if (!W.IntersectionObserver) { cb(true); return null; }
@@ -51,10 +51,13 @@ var cap = $('.cap'), dock = $('.dock');
 var N = plates.length, NG = N / 3;
 var cx = new Float64Array(N), stp = new Uint8Array(N);
 var step = 170, loopW = 1020, sx = 195, top0 = 0, path = 1, K = 1.15, DRIFT = 0.010, PCAP = 24;
-var cur = 0, drift = 0, hit = 0, day0 = 0, deep = 0, py0 = 0;
+var cur = 0, drift = 0, hit = 0, day0 = 0, deep = 0, py0 = 0, ph0 = -2, idle = 0;
+var PHASES = ['Подбор аналогов со склада', 'Макет и согласование',
+'Нанесение логотипа на тираж', 'Доставка к открытию'];
+var subB = $('.hero__sub .b');
 function mLine() {
 var wide = innerWidth >= 760;
-K = wide ? 1.6 : 1.15; DRIFT = wide ? 0.014 : 0.010; PCAP = wide ? 60 : 24;
+K = wide ? 1.25 : 1.0; DRIFT = wide ? 0.014 : 0.010; PCAP = wide ? 60 : 24;
 step = N > 1 ? (plates[1].offsetLeft - plates[0].offsetLeft) : 170;
 loopW = step * NG;
 for (var i = 0; i < N; i++) cx[i] = plates[i].offsetLeft + plates[i].offsetWidth / 2;
@@ -64,7 +67,8 @@ path = Math.max(1, scroller.offsetHeight - innerHeight);
 }
 function jobLine(now, sy, dt) {
 var p = c01((sy - top0) / path), i;
-if (!LOW) drift += dt * DRIFT;
+idle += dt;
+if (!LOW && idle < 1500) drift += dt * DRIFT;
 var target = -p * loopW * K - drift;
 cur += (target - cur) * (1 - Math.pow(0.0016, dt / 1000));
 var x = -loopW + (cur % loopW);            
@@ -93,8 +97,15 @@ stage.style.setProperty('--py2', (py * 0.4).toFixed(1) + 'px');
 stage.style.setProperty('--py3', (py * 0.2).toFixed(1) + 'px');
 }
 }
-if (p >= 0.5 && !deep) { deep = 1; stage.classList.add('is-deep'); cap.classList.add('is-on'); dock.classList.add('is-on'); }
-else if (p < 0.45 && deep) { deep = 0; stage.classList.remove('is-deep'); cap.classList.remove('is-on'); }
+var ph = p < 0.22 ? -1 : Math.min(3, Math.floor((p - 0.22) / 0.195));
+if (ph !== ph0) {
+ph0 = ph;
+if (ph < 0) stage.classList.remove('has-phase');
+else { if (subB) subB.textContent = PHASES[ph]; stage.classList.add('has-phase'); }
+}
+if (p >= 0.5 && !deep) { deep = 1; cap.classList.add('is-on'); dock.classList.add('is-on'); }
+else if (p < 0.45 && deep) { deep = 0; cap.classList.remove('is-on'); }
+if (idle >= 1500 && Math.abs(target - cur) < 0.4 && Math.abs(ht - hit) < 0.01) return 0;
 return 1;
 }
 if (RM) {

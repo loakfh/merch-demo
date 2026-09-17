@@ -237,13 +237,6 @@ rail.addEventListener('pointerleave', function () { if (hot) { reset(hot); hot =
 M.measure(function () { if (hot) hr = hot.getBoundingClientRect(); });
 }
 }
-$$('.marq').forEach(function (m) {
-var t = $('.marq__t', m);
-if (!t) return;
-var w = t.scrollWidth / 2, speed = innerWidth >= 760 ? 28 : 22;
-t.style.setProperty('--dur', Math.max(20, Math.round(w / speed)) + 's');
-M.io(m, function (vis) { m.classList.toggle('in', vis); }, { threshold: 0 });
-});
 var days = $('.days'), dstage = $('.days__stage');
 if (days && dstage) {
 var items = $$('.days__it', days), big = $('#daybig'), bar = $('#daybar');
