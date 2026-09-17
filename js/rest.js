@@ -221,7 +221,7 @@ box.style.height = '';
 }, 420);
 }
 nav(); live();
-$('.wz__h', b).focus({ preventScroll: true });
+$('.wz__h', b).focus();
 save();
 }
 function next() { if (valid(st.step)) go(nextOf(st.step), 1); }

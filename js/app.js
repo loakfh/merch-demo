@@ -92,7 +92,7 @@ io(hero, function (vis) {
 if (vis) { capEl.classList.remove('is-on'); dockEl.classList.remove('is-on'); }
 else { capEl.classList.add('is-on'); dockEl.classList.add('is-on'); }
 }, { threshold: 0, rootMargin: '-45% 0px 0px 0px' });
-var clock = $('#clock'), board = $('#board'), bcap = $('#boardcap');
+var clock = $('#clock'), board = $('#board'), bcap = $('#boardcap'), bfact = $('#boardfact');
 var bTo = 0, bVis = 0, ctid = 0;
 function pad(n) { return n < 10 ? '0' + n : '' + n; }
 function put(k, v) { var e = $('[data-c="' + k + '"]', clock); if (e) e.textContent = v; }
@@ -110,6 +110,7 @@ bTo = 0;
 if (iso) { var d = new Date(iso + 'T00:00:00'); if (!isNaN(+d)) bTo = +d; }
 if (bcap) bcap.textContent = S[bTo ? 'board.cap' : 'board.empty'] || '';
 if (clock) clock.hidden = !bTo;
+if (bfact) bfact.hidden = !!bTo;
 tick();
 }
 io(board, function (vis) { bVis = vis; tick(); }, { threshold: 0.05 });
