@@ -14,15 +14,18 @@ var jobs = [], ticking = 0, last = 0, LOW = 0, fc = 0, ft = 0, bad = 0;
 function req() { if (!ticking) { ticking = 1; requestAnimationFrame(frame); } }
 function frame(now) {
 ticking = 0;
-var dt = last ? Math.min(64, now - last) : 16; last = now;
+var gap = last ? now - last : 16, dt = Math.min(64, gap); last = now;
 var sy = W.pageYOffset, live = 0, i;
 for (i = 0; i < jobs.length; i++) { if (jobs[i](now, sy, dt)) live = 1; }
 if (!LOW) {
+if (gap > 100) { fc = 0; ft = now; }
+else {
 fc++;
 if (!ft) ft = now;
 else if (now - ft >= 1000) {
 if (fc * 1000 / (now - ft) < 45) { if (++bad >= 2) low(); } else bad = 0;
 fc = 0; ft = now;
+}
 }
 }
 if (live && !D.hidden) req();
@@ -47,19 +50,12 @@ if (!W.IntersectionObserver) { cb(true); return null; }
 var o = new IntersectionObserver(function (es) { cb(es[0].isIntersecting, o); }, opt || {});
 o.observe(el); return o;
 }
-var PMAP = {
-bg: '--bg', surface: '--surface', surface2: '--surface-2', ink: '--ink', ink2: '--ink-2',
-edge: '--edge', hair: '--hair', lime: '--lime', lime2: '--lime-2', limeRim: '--lime-rim',
-limeInk: '--lime-ink', invertBg: '--invert-bg', invertInk: '--invert-ink',
-disabled: '--disabled', disabledBg: '--disabled-bg', ring: '--ring',
-plus: '--plus', plusA: '--plus-a', fogA: '--fog-a', glowA: '--glow-a'
-};
 var tb = $('#themeb'), palLive = 0;
 function dark() { var t = E.dataset.theme; return t ? t === 'dark' : mqD.matches; }
 function palette() {
 var p = CFG.palette; if (!palLive || !p || !p.light) return;
 var s = dark() ? (p.dark || p.light) : p.light, sty = E.style, k;
-for (k in PMAP) if (s[k] != null) sty.setProperty(PMAP[k], s[k]);
+for (k in s) sty.setProperty('--' + k.replace(/([A-Z0-9])/g, '-$1').toLowerCase(), s[k]);
 }
 function colorMeta() {
 var p = CFG.palette || {}, l = $('#tcl'), k = $('#tcd');
@@ -96,7 +92,7 @@ io(hero, function (vis) {
 if (vis) { capEl.classList.remove('is-on'); dockEl.classList.remove('is-on'); }
 else { capEl.classList.add('is-on'); dockEl.classList.add('is-on'); }
 }, { threshold: 0, rootMargin: '-45% 0px 0px 0px' });
-var clock = $('#clock'), board = $('#board'), bfact = $('#boardfact');
+var clock = $('#clock'), board = $('#board'), bcap = $('#boardcap');
 var bTo = 0, bVis = 0, ctid = 0;
 function pad(n) { return n < 10 ? '0' + n : '' + n; }
 function put(k, v) { var e = $('[data-c="' + k + '"]', clock); if (e) e.textContent = v; }
@@ -112,8 +108,8 @@ if (bVis && !D.hidden) ctid = setTimeout(tick, 1000 - (Date.now() % 1000));
 function setDate(iso) {
 bTo = 0;
 if (iso) { var d = new Date(iso + 'T00:00:00'); if (!isNaN(+d)) bTo = +d; }
+if (bcap) bcap.textContent = S[bTo ? 'board.cap' : 'board.empty'] || '';
 if (clock) clock.hidden = !bTo;
-if (bfact) bfact.hidden = !!bTo;
 tick();
 }
 io(board, function (vis) { bVis = vis; tick(); }, { threshold: 0.05 });
@@ -143,16 +139,22 @@ add(job);
 D.addEventListener('pointerleave', function () { tx = 0; ty = 0; on = 0; add(job); });
 }
 magnet($('.btn--hero'), 220, 0.42);
-var tilts = $$('.plus--tilt');
+var liveT = [];
 function jobPlus() {
 if (LOW) return 0;
-for (var i = 0; i < tilts.length; i++) {
-var e = tilts[i], r = e.parentNode.getBoundingClientRect();
+for (var i = 0; i < liveT.length; i++) {
+var e = liveT[i], r = e.parentNode.getBoundingClientRect();
 e.style.setProperty('--py', (((r.top + r.height / 2) / innerHeight - 0.5) * -44).toFixed(1) + 'px');
 }
 return 0;
 }
-if (tilts.length && !RM) { add(jobPlus); addEventListener('scroll', function () { add(jobPlus); }, { passive: true }); }
+if (!RM) $$('.plus--tilt').forEach(function (e) {
+io(e.parentNode, function (vis) {
+var i = liveT.indexOf(e);
+if (vis && i < 0) { liveT.push(e); add(jobPlus); }
+else if (!vis && i >= 0) { liveT.splice(i, 1); if (!liveT.length) del(jobPlus); }
+}, { rootMargin: '10% 0px' });
+});
 function src(n) { return location.pathname.indexOf('/site/') >= 0 ? '../' + n : n; }
 function applyCfg(c) {
 if (!c || !c.brand) return;
@@ -179,8 +181,7 @@ PRC = p;
 if (W.__MD) { W.__MD.prices = p; if (W.__MD.onPrices) W.__MD.onPrices(p); }
 }).catch(function () { });
 W.__MD = {
-cfg: CFG, prices: PRC, slots: S, S: S, jobs: jobs, add: add, del: del, req: req, io: io,
-measure: onMeasure, RM: RM, fine: mqF, setDate: setDate, low: function () { return LOW; }
+cfg: CFG, prices: PRC, S: S, jobs: jobs, add: add, del: del, io: io, RM: RM, setDate: setDate
 };
 var me = (D.currentScript && D.currentScript.src) || 'js/app.js';
 var restUrl = me.replace(/app\.js(\?.*)?$/, 'rest.js');

@@ -318,17 +318,15 @@ if (src) data.source = src;
 return { text: cut(L), data: data };
 }
 function cut(L) {
-var s = L.join('\n');
-if (s.length <= 1800) return s;
-var i;
-for (i = 0; i < L.length; i++) if (L[i].indexOf('Детали: ') === 0) L[i] = 'Детали: ' + L[i].slice(8, 200) + '…';
-s = L.join('\n'); if (s.length <= 1800) return s;
-for (i = L.length - 1; i >= 0; i--) if (L[i].indexOf('— Свой вариант') === 0) L.splice(i, 1);
-s = L.join('\n'); if (s.length <= 1800) return s;
-var n = 0, out = [];
-for (i = 0; i < L.length; i++) { if (L[i].indexOf('— ') === 0) { n++; continue; } out.push(L[i]); }
-out.splice(1, 1, n + ' позиций, список уточним');
-return out.join('\n').slice(0, 1800);
+var j = function () { return L.join('\n'); }, i, n = 0;
+if (j().length <= 1800) return j();
+for (i = 0; i < L.length; i++) if (!L[i].indexOf('Детали: ')) L[i] = L[i].slice(0, 208) + '…';
+if (j().length <= 1800) return j();
+for (i = L.length; i--;) if (!L[i].indexOf('— Свой вариант')) L.splice(i, 1);
+if (j().length <= 1800) return j();
+for (i = L.length; i--;) if (!L[i].indexOf('— ')) { n++; L.splice(i, 1); }
+L.splice(1, 0, n + ' позиций, список уточним');
+return j().slice(0, 1800);
 }
 /*! Единственная точка отправки заявки на весь сайт.
 Заменить на webhook CRM или бота: в config.json поставить endpoint.mode = "webhook" и endpoint.url. */
@@ -539,7 +537,19 @@ else tls.forEach(function (e, i) {
 e.style.setProperty('--dl', (i % 4) * 70 + 'ms');
 M.io(e, function (vis, o) { if (vis) { e.classList.add('in'); if (o) o.disconnect(); } }, { threshold: 0.4 });
 });
-var dl = $$('.days__it');
+var dbar = $('#daybar'), dsec = $('.days');
+if (dbar && dsec) {
+if (RM) dbar.style.setProperty('--dp', 1);
+else {
+var jobBar = function () {
+var r = dsec.getBoundingClientRect(), p = (innerHeight - r.top) / (innerHeight + r.height);
+dbar.style.setProperty('--dp', (p < 0 ? 0 : p > 1 ? 1 : p).toFixed(3));
+return 0;
+};
+M.io(dsec, function (vis) { if (vis) M.add(jobBar); else M.del(jobBar); }, { rootMargin: '10% 0px' });
+}
+}
+var dl = $('.days__it');
 if (dl.length) {
 if (RM) dl.forEach(function (e) { e.classList.add('on'); });
 else dl.forEach(function (e) {
