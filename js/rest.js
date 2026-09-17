@@ -67,7 +67,7 @@ var c = chosen();
 for (var i = 0; i < c.length; i++) if (printOpts(c[i]).length) return 1;
 return 0;
 }
-function stepMap() { var m = [1, 2, 3]; if (anyPrint()) m.push(4); m.push(5); return m; }
+function stepMap() { var m = [1, 2, 3]; if (!chosen().length || anyPrint()) m.push(4); m.push(5); return m; }
 function seq() { return stepMap().concat([6]); }
 function nextOf(n) { var s = seq(), i = s.indexOf(n); return i >= 0 && i < s.length - 1 ? s[i + 1] : n; }
 function prevOf(n) { var s = seq(), i = s.indexOf(n); return i > 0 ? s[i - 1] : n; }
@@ -111,17 +111,21 @@ return '<li class="pill"><label><input type="' + (type || 'radio') + '" name="' 
 (on ? ' checked' : '') + '><span>' + esc(label) + '</span></label></li>';
 }
 function qtyOf(c) { return st.qtyMode === 'own' ? (+st.qtyBy[c.id] || st.qty) : st.qty; }
+function qtyHint() {
+$('#qtymode').textContent = st.qty > 5000 ? txt('wz.qty.over') :
+(st.qtyMode === 'own' ? txt('wz.qty.each') : txt('wz.qty.common'));
+}
 function buildQtyRows() {
 var wrap = $('#qtyrows');
 wrap.hidden = st.qtyMode !== 'own';
-$('#qtymode').textContent = st.qtyMode === 'own' ? txt('wz.qty.each') : txt('wz.qty.common');
+qtyHint();
 if (st.qtyMode !== 'own') { wrap.innerHTML = ''; return; }
 var h = '', cs = chosen();
 for (var i = 0; i < cs.length; i++) {
 var c = cs[i], q = +st.qtyBy[c.id] || st.qty;
 h += '<li class="wz__row"><p class="wz__rowh">' + esc(c.name) + '</p>' +
 '<p class="wz__rowq"><label class="vh" for="q-' + c.id + '">' + esc(c.name) + '</label>' +
-'<input class="fld__i" id="q-' + c.id + '" data-qid="' + c.id + '" type="number" inputmode="numeric" min="1" max="100000" step="1" value="' + q + '">' +
+'<input class="fld__i" id="q-' + c.id + '" data-qid="' + c.id + '" type="text" inputmode="numeric" autocomplete="off" value="' + q + '">' +
 '<span class="wz__rowu">' + esc(c.unit) + ' · ' + esc(txt('wz.min', { n: c.minQty, u: c.unit })) + '</span></p>' +
 '<p class="wz__warn" data-warn="' + c.id + '"' + (q < c.minQty ? '' : ' hidden') + '>Ниже минимального тиража категории</p></li>';
 }
@@ -177,7 +181,7 @@ if (st.own && !st.ownTxt.trim()) { err(1, txt('wz.err.own')); $('#wzowntxt').foc
 clearErr(1); return 1;
 }
 if (n === 2) {
-if (!(st.qty > 0)) { err(2, txt('wz.err.qty')); qi.focus(); return 0; }
+if (qtyBad || !(st.qty > 0)) { err(2, txt('wz.err.qty')); qi.setAttribute('aria-invalid', 'true'); qi.focus(); return 0; }
 if (st.qtyMode === 'own') {
 var cs = chosen();
 for (var i = 0; i < cs.length; i++) if (!(+st.qtyBy[cs[i].id] > 0)) { err(2, txt('wz.err.qty')); return 0; }
@@ -255,7 +259,8 @@ h += '<li class="wz__row"><p class="wz__rowh">' + esc(it.c.name) + '</p>' +
 if (st.own && st.ownTxt) h += '<li class="wz__row"><p class="wz__rowh">' + esc(txt('wz.own')) + '</p>' +
 '<p class="wz__rowp">' + esc(st.ownTxt) + '</p><p class="wz__rowv">' + esc(txt('wz.own.noprice')) + '</p></li>';
 $('#resrows').innerHTML = h;
-var hints = [];
+var hints = [], pm = $('#respm');
+if (pm) pm.hidden = !t.n;
 if (!t.n) {
 res.classList.add('is-warn');
 M.del(tweenJob); tw = 0;
@@ -357,14 +362,14 @@ qu.textContent = cs.length ? cs[0].unit : 'шт';
 if (qi.value !== String(st.qty)) qi.value = st.qty;
 rng.value = Math.min(5000, Math.max(10, st.qty));
 rng.classList.toggle('is-over', st.qty > 5000);
-$('#qtymode').textContent = st.qty > 5000 ? txt('wz.qty.over') :
-(st.qtyMode === 'own' ? txt('wz.qty.each') : txt('wz.qty.common'));
+qtyHint();
 }
+var qtyBad = 0;
 function normQty(v) {
 v = String(v).replace(/\s/g, '').replace(',', '.');
-var n = parseFloat(v);
-if (!isFinite(n) || n < 1) return 0;
-n = Math.floor(n);
+if (!/^\d+(\.\d+)?$/.test(v)) return 0;
+var n = Math.floor(parseFloat(v));
+if (!(n >= 1)) return 0;
 return n > 100000 ? 100000 : n;
 }
 function dateCalc() {
@@ -420,18 +425,25 @@ if (stepMap().indexOf(st.step) < 0 && st.step !== 6) go(5, 1); else nav();
 save();
 });
 $('#wzowntxt').addEventListener('input', function () { st.ownTxt = this.value; save(); });
-rng.addEventListener('input', function () { st.qty = parseInt(rng.value, 10) || 0; syncQty(); clearErr(2); save(); });
+function qtyOk(n) {
+qtyBad = 0; qi.removeAttribute('aria-invalid'); clearErr(2);
+st.qty = n; syncQty(); buildQtyRows(); save();
+}
+function qtyErr() {
+qtyBad = 1; qi.setAttribute('aria-invalid', 'true'); err(2, txt('wz.err.qty'));
+}
+rng.addEventListener('input', function () { qtyOk(parseInt(rng.value, 10) || 10); });
 qi.addEventListener('input', function () {
 var n = normQty(qi.value);
-if (n) { st.qty = n; qn.textContent = money(n); rng.value = Math.min(5000, Math.max(10, n)); }
+qtyBad = n ? 0 : 1;
+if (n) { st.qty = n; qn.textContent = money(n); rng.value = Math.min(5000, Math.max(10, n)); qtyHint(); clearErr(2); qi.removeAttribute('aria-invalid'); }
 });
 qi.addEventListener('change', function () {
 var n = normQty(qi.value);
-if (!n) { err(2, txt('wz.err.qty')); return; }
-st.qty = n; clearErr(2); syncQty(); buildQtyRows(); save();
+if (n) qtyOk(n); else qtyErr();
 });
 $$('[data-q]').forEach(function (b) {
-b.addEventListener('click', function () { st.qty = +b.dataset.q; clearErr(2); syncQty(); buildQtyRows(); save(); });
+b.addEventListener('click', function () { qtyOk(+b.dataset.q); });
 });
 $('#qtysplit').addEventListener('change', function () {
 st.qtyMode = this.checked ? 'own' : 'common';
@@ -442,6 +454,7 @@ var id = e.target.dataset && e.target.dataset.qid;
 if (!id) return;
 var n = normQty(e.target.value), c = catById(id);
 st.qtyBy[id] = n;
+if (n) e.target.removeAttribute('aria-invalid'); else e.target.setAttribute('aria-invalid', 'true');
 var w = $('[data-warn="' + id + '"]');
 if (w && c) w.hidden = !(n && n < c.minQty);
 if (n) clearErr(2);
@@ -520,6 +533,12 @@ if (tk) L.push('Задача: ' + tk);
 if (ct) L.push('Контакт: ' + ct);
 send(L.join('\n'), { task: tk, contact: ct });
 });
+var tls = $$('.tile');
+if (RM) tls.forEach(function (e) { e.classList.add('in'); });
+else tls.forEach(function (e, i) {
+e.style.setProperty('--dl', (i % 4) * 70 + 'ms');
+M.io(e, function (vis, o) { if (vis) { e.classList.add('in'); if (o) o.disconnect(); } }, { threshold: 0.4 });
+});
 var dl = $$('.days__it');
 if (dl.length) {
 if (RM) dl.forEach(function (e) { e.classList.add('on'); });
@@ -550,22 +569,6 @@ abtn.disabled = true; aerr.textContent = txt('ai.sent');
 M.onPrices = function (p) {
 if (JSON.stringify(p) === JSON.stringify(PRC)) return;
 PRC = p; M.prices = p;
-var tiles = $('.grid');
-if (tiles) {
-var ico = {}, h = '', band = $('.band');
-$$('.tile', tiles).forEach(function (t) { ico[t.dataset.id] = t.dataset.ico; });
-for (var i = 0; i < p.categories.length; i++) {
-var c = p.categories[i];
-h += '<li class="tile" data-id="' + c.id + '" data-ico="' + (ico[c.id] || 'i-mark') + '">' +
-'<div class="tile__top"><span class="tile__ico"><svg viewBox="0 0 40 40"><use href="#' + (ico[c.id] || 'i-mark') + '"/></svg></span>' +
-'<span class="tile__n" aria-hidden="true">' + (i < 9 ? '0' : '') + (i + 1) + '</span></div>' +
-'<h3 class="tile__t">' + esc(c.name) + '</h3>' +
-'<div class="tile__b"><span class="tile__d">от ' + c.minQty + ' ' + esc(c.unit) + '</span>' +
-'<span class="tile__m" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#i-mark"/></svg></span></div></li>';
-if (i === 3 && band) h += band.outerHTML;
-}
-tiles.innerHTML = h;
-}
 if (wz) {
 var ch = '';
 for (var j = 0; j < p.categories.length; j++) ch += pill('cat', p.categories[j].id, p.categories[j].name, st.cats.indexOf(p.categories[j].id) >= 0, 'checkbox');

@@ -207,7 +207,6 @@ html:not(.js) .wz{display:none}
 }
 
 /* ---------- 6. Заявка ---------- */
-.req{content-visibility:auto;contain-intrinsic-size:auto 800px}
 .req__box{margin-top:26px;border-radius:var(--r-slab);padding:24px 20px;background:var(--surface);
   box-shadow:inset 0 0 0 1px var(--hair),var(--sh-1)}
 .req__box form{display:grid;gap:14px}
