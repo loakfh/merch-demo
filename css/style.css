@@ -122,11 +122,14 @@
 .days__word{font-size:20px;color:var(--ink-60);font-weight:650}
 .days__list{list-style:none;padding:0;margin:0;display:grid;gap:2px}
 .days__it{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;padding:10px 0;
-  opacity:.34;transition:opacity var(--t-base) var(--e-inout),transform var(--t-base) var(--e-inout)}
-.days__it b{font-size:16px;font-weight:700;color:var(--ink-60);font-variant-numeric:tabular-nums}
+  color:var(--ink-60);transition:color var(--t-base) var(--e-inout),transform var(--t-base) var(--e-inout)}
+.days__it b{font-size:16px;font-weight:700;color:var(--ink-60);font-variant-numeric:tabular-nums;
+  transition:color var(--t-base) var(--e-inout)}
 .days__it span{font-size:19px;font-weight:650;letter-spacing:-.02em}
-.days__it.on{opacity:1}
+.days__it.on{color:var(--ink);transform:translateX(4px)}
 .days__it.on b{color:var(--ink)}
+.days__it.on span{text-decoration:underline;text-decoration-color:var(--lime);text-decoration-thickness:4px;
+  text-underline-offset:5px}
 .days__bar{height:12px;border-radius:8px;background:rgba(18,20,15,.10);overflow:hidden;margin-top:6px}
 .days__bar i{display:block;height:100%;border-radius:8px;transform-origin:left center;
   transform:scaleX(var(--dp,0));background:linear-gradient(90deg,var(--lime-2),var(--lime))}
@@ -183,7 +186,7 @@ html:not(.js) .nojs{display:block;margin-top:24px}
 @media (prefers-reduced-motion:reduce){
   .days{height:auto}
   .days__stage{position:static;height:auto;min-height:0;padding:0}
-  .days__it{opacity:1}
+  .days__it{color:var(--ink)}
   .days__it b{color:var(--ink)}
   .rail{scroll-snap-type:x mandatory;scroll-behavior:auto}
   .marq{overflow-x:auto}
