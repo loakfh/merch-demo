@@ -9,8 +9,9 @@
   "contacts": {
     "phone": "+7 000 000-00-00",
     "phoneHref": "tel:+70000000000",
-    "telegram": "https://t.me/example",
-    "telegramUser": "@example",
+    "_телеграмВременный": "ВРЕМЕННЫЙ КОНТАКТ: заменить на контакт владельца перед передачей",
+    "telegram": "https://t.me/Loakfh2",
+    "telegramUser": "@Loakfh2",
     "email": "info@example.ru",
     "city": "Москва"
   },

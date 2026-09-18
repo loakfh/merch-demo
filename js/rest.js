@@ -384,7 +384,8 @@ if (!st.urgT) { st.urg = want; syncUrg(); }
 else if (st.urg !== want) msgs.push(txt('wz.date.mismatch'));
 if (days < 5) { st.rushDays = days; msgs.push(txt('wz.rush')); }
 } else { st.date = ''; clearErr(3); }
-if (!msgs.length && st.urg === 'days5') msgs.push('5 дней — наценка за срочность');
+if (st.date) msgs.unshift(ruDate(st.date));   
+if (msgs.length < 2 && st.urg === 'days5') msgs.push('5 дней — наценка за срочность');
 note.textContent = msgs.join('. ');
 M.setDate(st.date);
 save();
@@ -541,9 +542,17 @@ var dbar = $('#daybar'), dsec = $('.days');
 if (dbar && dsec) {
 if (RM) dbar.style.setProperty('--dp', 1);
 else {
+var hero = $('.hero');
+var vref = hero ? hero.offsetHeight : innerHeight;
+var span = vref + dsec.offsetHeight, doc0 = D.documentElement.scrollHeight;
+addEventListener('resize', function () {
+var d = D.documentElement.scrollHeight;
+if (d === doc0) return;
+doc0 = d; vref = hero ? hero.offsetHeight : innerHeight;
+}, { passive: true });
 var jobBar = function () {
-var r = dsec.getBoundingClientRect(), p = (innerHeight - r.top) / (innerHeight + r.height);
-dbar.style.setProperty('--dp', (p < 0 ? 0 : p > 1 ? 1 : p).toFixed(3));
+var t = (vref - dsec.getBoundingClientRect().top) / span;
+dbar.style.setProperty('--dp', (t < 0 ? 0 : t > 1 ? 1 : t).toFixed(3));
 return 0;
 };
 M.io(dsec, function (vis) { if (vis) M.add(jobBar); else M.del(jobBar); }, { rootMargin: '10% 0px' });

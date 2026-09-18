@@ -75,23 +75,15 @@ paintTheme();
 mqD.addEventListener('change', function () { if (!E.dataset.theme) paintTheme(); });
 paintTheme();
 var hero = $('.hero');
-function go() { if (hero) hero.classList.add('go'); }
-if (RM) go();
-else {
-var gt = setTimeout(go, 400);
-if (D.fonts && D.fonts.ready) D.fonts.ready.then(function () { clearTimeout(gt); requestAnimationFrame(go); });
-}
 var rises = $$('.rise');
 if (RM) rises.forEach(function (e) { e.classList.add('in'); });
 else rises.forEach(function (e) {
 io(e, function (vis, o) { if (vis) { e.classList.add('in'); if (o) o.disconnect(); } },
 { threshold: 0.25, rootMargin: '0px 0px -12% 0px' });
 });
-var capEl = $('.cap'), dockEl = $('.dock');
-io(hero, function (vis) {
-if (vis) { capEl.classList.remove('is-on'); dockEl.classList.remove('is-on'); }
-else { capEl.classList.add('is-on'); dockEl.classList.add('is-on'); }
-}, { threshold: 0, rootMargin: '-45% 0px 0px 0px' });
+var capEl = $('.cap');
+io(hero, function (vis) { capEl.classList.toggle('is-on', !vis); },
+{ threshold: 0, rootMargin: '-45% 0px 0px 0px' });
 var clock = $('#clock'), board = $('#board'), bcap = $('#boardcap'), bfact = $('#boardfact');
 var bTo = 0, bVis = 0, ctid = 0;
 function pad(n) { return n < 10 ? '0' + n : '' + n; }
