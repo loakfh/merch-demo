@@ -540,7 +540,8 @@ M.io(e, function (vis, o) { if (vis) { e.classList.add('in'); if (o) o.disconnec
 });
 var dbar = $('#daybar'), dsec = $('.days');
 if (dbar && dsec) {
-if (RM) dbar.style.setProperty('--dp', 1);
+var MOB = matchMedia('(max-width:767px)').matches;
+if (RM || MOB) dbar.style.setProperty('--dp', 1);
 else {
 var hero = $('.hero');
 var vref = hero ? hero.offsetHeight : innerHeight;
